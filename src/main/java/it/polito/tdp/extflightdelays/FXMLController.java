@@ -1,9 +1,12 @@
 package it.polito.tdp.extflightdelays;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.extflightdelays.model.Adiacenza;
 import it.polito.tdp.extflightdelays.model.Model;
+import it.polito.tdp.extflightdelays.model.StatoTuristi;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -28,7 +31,7 @@ public class FXMLController {
     private Button btnCreaGrafo;
 
     @FXML
-    private ComboBox<?> cmbBoxStati;
+    private ComboBox<String> cmbBoxStati;
 
     @FXML
     private Button btnVisualizzaVelivoli;
@@ -44,17 +47,64 @@ public class FXMLController {
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	this.txtResult.clear();
+    	model.creaGrafo();
+    	Integer vertici=model.getNumVertici(), archi=model.getNumArchi();
+    	if(vertici==0 || archi.equals(0)) {
+    		this.txtResult.appendText("ATTENZIONE! Qualcosa e' andato storto nella creazione del grafo.\n");
+    		return;
+    	}
+    	this.txtResult.appendText("GRAFO CREATO!\n #VERTICI: "+vertici+" e #ARCHI: "+archi+"\n");
+    	this.cmbBoxStati.getItems().addAll(model.getStati());
     }
 
     @FXML
     void doSimula(ActionEvent event) {
-
+    	this.txtResult.clear();
+    	String TString=this.txtT.getText(),GString=this.txtG.getText();
+    	Integer turisti=null,giorni=null;
+    	try {
+    		turisti=Integer.parseInt(TString);
+    	}catch (NumberFormatException e) {
+    		e.printStackTrace();
+    		this.txtResult.appendText("ATTENZIONE! Il valore inserito nel campo 'T' non e' un numero intero");
+    		throw new NumberFormatException();
+    	}
+    	try {
+    		giorni=Integer.parseInt(GString);
+    	}catch (NumberFormatException e) {
+    		e.printStackTrace();
+    		this.txtResult.appendText("ATTENZIONE! Il valore inserito nel campo 'T' non e' un numero intero");
+    		throw new NumberFormatException();
+    	}
+    	String statoSelezionato=this.cmbBoxStati.getValue();
+    	if(statoSelezionato==null) {
+    		this.txtResult.appendText("ATTENZIONE! E' necessario selezionare uno stato per simulare.\n");
+    		return;
+    	}
+    	List<StatoTuristi> statoTuristi=model.simula(turisti,giorni,statoSelezionato);
+    	for(StatoTuristi s:statoTuristi) {
+    		this.txtResult.appendText(s.getStato()+" turisti:"+s.getTuristi()+"\n");
+    	}
     }
 
     @FXML
     void doVisualizzaVelivoli(ActionEvent event) {
-
+    	this.txtResult.clear();
+    	String stato=this.cmbBoxStati.getValue();
+    	if(stato==null) {
+    		this.txtResult.appendText("ATTENZIONE! Valore selezionato errato!\n");
+    		return;
+    	}
+    	List<Adiacenza> velivoli=model.visualizzaVelivoli(stato);
+    	if(velivoli.size()<=0) {
+    		this.txtResult.appendText("Errore nella ricerca dei velivoli.\n");
+    		return;
+    	}
+    	this.txtResult.appendText("Gli stati collegati (e il relativo numero di velivoli sono:\n"); 
+    	for(Adiacenza a: velivoli) {
+    		this.txtResult.appendText(a.getA2()+"-->"+a.getPeso()+"\n");
+    	}
     }
 
     @FXML

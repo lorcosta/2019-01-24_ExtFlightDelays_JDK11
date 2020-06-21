@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import it.polito.tdp.extflightdelays.model.Adiacenza;
 import it.polito.tdp.extflightdelays.model.Airline;
 import it.polito.tdp.extflightdelays.model.Airport;
 import it.polito.tdp.extflightdelays.model.Flight;
@@ -108,6 +109,57 @@ public class ExtFlightDelaysDAO {
 
 			conn.close();
 			return result;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println("Errore connessione al database");
+			throw new RuntimeException("Error Connection Database");
+		}
+	}
+	
+	public List<String> listState(){
+		String sql="SELECT DISTINCT state " + 
+				"FROM airports " + 
+				"ORDER BY state";
+		List<String> stati=new ArrayList<>();
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet rs = st.executeQuery();
+
+			while (rs.next()) {
+				String stato=rs.getString("state");
+				stati.add(stato);
+			}
+
+			conn.close();
+			return stati;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println("Errore connessione al database");
+			throw new RuntimeException("Error Connection Database");
+		}
+	}
+	
+	public List<Adiacenza> getAdiacenze(){
+		String sql="SELECT a1.STATE a1, a2.STATE a2, COUNT(DISTINCT f.tail_number) as peso " + 
+				"FROM airports a1, airports a2, flights f " + 
+				"WHERE f.origin_airport_id=a1.id AND f.destination_airport_id=a2.id " + 
+				"GROUP BY a1.state, a2.state";
+		List<Adiacenza> adiacenze=new ArrayList<>();
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet rs = st.executeQuery();
+
+			while (rs.next()) {
+				Adiacenza adiacenza=new Adiacenza(rs.getString("a1"),rs.getString("a2"),rs.getDouble("peso"));
+				adiacenze.add(adiacenza);
+			}
+
+			conn.close();
+			return adiacenze;
 
 		} catch (SQLException e) {
 			e.printStackTrace();
